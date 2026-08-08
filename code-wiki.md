@@ -12,7 +12,7 @@ This document serves as the authoritative, maintained technical wiki for functio
 
 ### Seed Script & Initial Data
 - **Line 14**: `seedInitialData()` (`backend/src/seed/seedProfiles.ts`)
-  Inserts default demo profiles for Student ("Rahul V. S."), Organizer ("IEEE Student Branch Council"), and Staff Advisor ("Dr. Anjali Nair"), alongside initial poster events for immediate swipe feed presentation.
+  Inserts default demo profiles for Student ("Rahul V. S."), Organizer ("IEEE Student Branch Council"), and Staff Advisor ("Dr. Anjali Nair"), alongside initial poster events and discussion threads into MongoDB.
 
 ### Authentication & Profiles Controller
 - **Line 18**: `getProfiles()` (`backend/src/controllers/authController.ts`)
@@ -50,9 +50,19 @@ This document serves as the authoritative, maintained technical wiki for functio
 - **Line 50**: `getStudentRoster()` (`backend/src/controllers/teacherController.ts`)
   Aggregates student records and calculates running point totals across Group I, Group II, and Group III against the 100-point KTU requirement.
 
+### Public Discussions Controller
+- **Line 60**: `getDiscussions()` (`backend/src/controllers/discussionController.ts`)
+  Retrieves all public forum discussion threads from MongoDB.
+- **Line 61**: `createDiscussion()` (`backend/src/controllers/discussionController.ts`)
+  Saves a new discussion thread document in MongoDB.
+- **Line 62**: `upvoteDiscussion()` (`backend/src/controllers/discussionController.ts`)
+  Increments the upvote count of a discussion thread in MongoDB.
+- **Line 63**: `addCommentToDiscussion()` (`backend/src/controllers/discussionController.ts`)
+  Pushes a new comment object into a thread document's comments array in MongoDB.
+
 ### Express Routing Setup
 - **Line 54**: `setupRoutes()` (`backend/src/routes/api.ts`)
-  Wires up Express REST API router endpoints for authentication, events, registrations, QR scanning, and teacher approval queues.
+  Wires up Express REST API router endpoints including `/api/health`, profiles, events, registrations, QR scanning, teacher approvals, and public discussions.
 - **Line 56**: `startServer()` (`backend/src/server.ts`)
   Initializes MongoDB database connection, triggers profile seeding, and starts the Express server listening on port 5000.
 
@@ -61,6 +71,8 @@ This document serves as the authoritative, maintained technical wiki for functio
 ## Frontend Subsystem (`frontend/src/`)
 
 ### API Services Client
+- **Line 63**: `fetchHealthCheck()` (`frontend/src/services/api.ts`)
+  Calls `/api/health` to verify backend and MongoDB availability.
 - **Line 64**: `fetchProfiles()` (`frontend/src/services/api.ts`)
   Calls `/api/profiles` endpoint to retrieve demo user identities.
 - **Line 66**: `createProfile()` (`frontend/src/services/api.ts`)
@@ -85,6 +97,14 @@ This document serves as the authoritative, maintained technical wiki for functio
   Calls `POST /api/teacher/reject` to deny a point claim.
 - **Line 86**: `fetchStudentRoster()` (`frontend/src/services/api.ts`)
   Calls `/api/teacher/roster` to load class point totals.
+- **Line 87**: `fetchDiscussions()` (`frontend/src/services/api.ts`)
+  Calls `/api/discussions` to load forum threads.
+- **Line 88**: `createDiscussion()` (`frontend/src/services/api.ts`)
+  Calls `POST /api/discussions` to post a new thread.
+- **Line 89**: `upvoteDiscussion()` (`frontend/src/services/api.ts`)
+  Calls `POST /api/discussions/:id/upvote` to upvote a thread.
+- **Line 90**: `addCommentToDiscussion()` (`frontend/src/services/api.ts`)
+  Calls `POST /api/discussions/:id/comment` to attach a comment.
 
 ### React Context & Auth Provider
 - **Line 90**: `AuthProvider` (`frontend/src/context/AuthContext.tsx`)
@@ -96,15 +116,13 @@ This document serves as the authoritative, maintained technical wiki for functio
 - **Line 96**: `CoinLogo` (`frontend/src/components/CoinLogo.tsx`)
   SVG gold coin emblem with anime.js rotation animation for KTUcoins branding without boxes.
 - **Line 98**: `LoadingScreen` (`frontend/src/components/LoadingScreen.tsx`)
-  Splash screen with anime.js logo pulse animation displayed during initial app load.
+  Splash screen with anime.js logo pulse animation polling `/api/health` to verify MongoDB readiness.
 - **Line 100**: `GachaRewardModal` (`frontend/src/components/GachaRewardModal.tsx`)
   Gacha game style anime.js summon celebration animation triggered upon earning or approving KTUcoins.
 
 ### Navigation & UI Components
-- **Line 104**: `DemoAuthBanner` (`frontend/src/components/DemoAuthBanner.tsx`)
-  Hackathon top banner explaining intentional fake auth architecture and role switcher.
 - **Line 106**: `CreateProfileModal` (`frontend/src/components/CreateProfileModal.tsx`)
-  Modal component for creating custom Student, Organizer, or Advisor profiles.
+  Modal component for creating custom Student, Organizer, or Advisor profiles stored in MongoDB.
 - **Line 108**: `PosterFeed` (`frontend/src/components/PosterFeed.tsx`)
   Signature vertical swipeable TikTok/Reels-style poster feed with swipe controls, 1-click registration, and KTU point badges.
 - **Line 110**: `EventDetailsModal` (`frontend/src/components/EventDetailsModal.tsx`)
@@ -114,7 +132,7 @@ This document serves as the authoritative, maintained technical wiki for functio
 - **Line 114**: `QRScannerModal` (`frontend/src/components/QRScannerModal.tsx`)
   Gate scanner interface for organizers supporting camera scanning and manual token verification.
 - **Line 116**: `CreateEventModal` (`frontend/src/components/CreateEventModal.tsx`)
-  Form modal for event organizers to post new campus posters.
+  Form modal for event organizers to post new campus posters directly to MongoDB.
 - **Line 118**: `LoginScreen` (`frontend/src/components/LoginScreen.tsx`)
   Dedicated login and role selection screen with split layout inspired by Instagram preview image.
 - **Line 120**: `Sidebar` (`frontend/src/components/Sidebar.tsx`)
@@ -124,14 +142,14 @@ This document serves as the authoritative, maintained technical wiki for functio
 - **Line 124**: `StudentDashboard` (`frontend/src/pages/StudentDashboard.tsx`)
   Student dashboard displaying activity group progress bars (Group I/II/III) against 100-point target and registered event passes.
 - **Line 126**: `OrganizerDashboard` (`frontend/src/pages/OrganizerDashboard.tsx`)
-  Organizer console for creating events, scanning student QR codes, and completing events.
+  Organizer console for creating events, scanning student QR codes, and completing events in MongoDB.
 - **Line 128**: `TeacherDashboard` (`frontend/src/pages/TeacherDashboard.tsx`)
-  Staff advisor console featuring 1-click point approval queue and student roster overview.
+  Staff advisor console featuring 1-click point approval queue and student roster overview from MongoDB.
 - **Line 130**: `DiscussionsPage` (`frontend/src/pages/DiscussionsPage.tsx`)
-  Reddit-style public campus discussions forum with thread categories, upvoting, comments, and GIF attachment support.
+  Reddit-style public campus discussions forum with thread categories, upvoting, comments, and GIF attachment support synced live with MongoDB.
 
 ### App Container
 - **Line 134**: `MainAppContent` (`frontend/src/App.tsx`)
-  Main container rendering active view tabs, top banner, sidebar navigation, anime.js gacha reward modal, and global overlays.
+  Main container rendering active view tabs, sidebar navigation, anime.js gacha reward modal, and global overlays.
 - **Line 136**: `App` (`frontend/src/App.tsx`)
   Root React application component wrapped in `AuthProvider`.

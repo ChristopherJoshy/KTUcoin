@@ -12,6 +12,8 @@ export interface User {
   avatarUrl?: string;
 }
 
+export type UserProfile = User;
+
 export interface CampusEvent {
   _id: string;
   title: string;

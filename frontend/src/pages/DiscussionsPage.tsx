@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MessageSquare, 
   ThumbsUp, 
@@ -13,9 +13,15 @@ import {
   Tag
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { 
+  fetchDiscussions, 
+  createDiscussion, 
+  upvoteDiscussion, 
+  addCommentToDiscussion 
+} from '../services/api';
 
 interface DiscussionThread {
-  id: string;
+  _id: string;
   authorName: string;
   authorRole: string;
   authorAvatar: string;
@@ -24,20 +30,20 @@ interface DiscussionThread {
   category: string;
   upvotes: number;
   hasUpvoted?: boolean;
-  commentsCount: number;
-  createdAt: string;
   comments: {
-    id: string;
+    _id?: string;
     author: string;
     text: string;
     gifUrl?: string;
     createdAt: string;
   }[];
+  createdAt: string;
 }
 
-// this function is used for reddit-style public campus discussions thread feed for more info refer code-wiki.md line 130
+// this function is used for reddit-style public campus discussions thread feed synced with MongoDB for more info refer code-wiki.md line 130
 export const DiscussionsPage: React.FC = () => {
   const { currentUser } = useAuth();
+  const [threads, setThreads] = useState<DiscussionThread[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
@@ -46,7 +52,7 @@ export const DiscussionsPage: React.FC = () => {
   const [showGifPicker, setShowGifPicker] = useState<boolean>(false);
   const [showCreateThread, setShowCreateThread] = useState<boolean>(false);
 
-  // New Thread state
+  // New Thread form state
   const [threadTitle, setThreadTitle] = useState('');
   const [threadContent, setThreadContent] = useState('');
   const [threadCategory, setThreadCategory] = useState('Group I Tech');
@@ -57,126 +63,67 @@ export const DiscussionsPage: React.FC = () => {
     { label: 'Campus Life', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&auto=format&fit=crop&q=80' },
   ];
 
-  const [threads, setThreads] = useState<DiscussionThread[]>([
-    {
-      id: 'disc-1',
-      authorName: 'Rahul V. S.',
-      authorRole: 'Student (S6 CSE)',
-      authorAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150',
-      title: 'How many Group I Activity Points does HackCampus 2026 award?',
-      content: 'I noticed HackCampus is listed under Group I. Is the 30 points allocation credited directly to the advisor portal upon gate verification?',
-      category: 'Group I Tech',
-      upvotes: 24,
-      hasUpvoted: false,
-      commentsCount: 3,
-      createdAt: '2 hours ago',
-      comments: [
-        {
-          id: 'c1',
-          author: 'IEEE Student Branch',
-          text: 'Yes! Once you scan your QR pass at the entrance and the event completes, points forward automatically to Dr. Anjali Nair queue.',
-          createdAt: '1 hour ago'
-        },
-        {
-          id: 'c2',
-          author: 'Anish Kumar',
-          text: 'Thanks for clarifying! Just registered my slot.',
-          createdAt: '45 mins ago'
-        }
-      ]
-    },
-    {
-      id: 'disc-2',
-      authorName: 'Dr. Anjali Nair',
-      authorRole: 'Staff Advisor',
-      authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-      title: 'Guide to KTU Group II Social & Green Energy Drive Approvals',
-      content: 'All S6 & S8 students participating in the Green Campus initiative must ensure gate QR scanning is recorded. Unverified attendance cannot be credited.',
-      category: 'Group II Social',
-      upvotes: 42,
-      hasUpvoted: true,
-      commentsCount: 1,
-      createdAt: '5 hours ago',
-      comments: [
-        {
-          id: 'c3',
-          author: 'NSS Unit 104',
-          text: 'Organizers will be equipped with live scanners at Campus Square starting 9 AM.',
-          createdAt: '3 hours ago'
-        }
-      ]
+  const loadDiscussionsFromDB = async () => {
+    try {
+      const data = await fetchDiscussions();
+      setThreads(data);
+    } catch (err) {
+      console.error('Failed to load discussions:', err);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    loadDiscussionsFromDB();
+  }, []);
 
   const categories = ['All', 'Group I Tech', 'Group II Social', 'Group III Arts', 'Internships'];
 
-  const handleToggleUpvote = (id: string) => {
-    setThreads(prev =>
-      prev.map(t => {
-        if (t.id === id) {
-          const hasUpvoted = !t.hasUpvoted;
-          return {
-            ...t,
-            hasUpvoted,
-            upvotes: hasUpvoted ? t.upvotes + 1 : t.upvotes - 1
-          };
-        }
-        return t;
-      })
-    );
+  const handleToggleUpvote = async (id: string) => {
+    try {
+      await upvoteDiscussion(id);
+      loadDiscussionsFromDB();
+    } catch (err) {
+      console.error('Upvote failed:', err);
+    }
   };
 
-  const handleAddComment = (threadId: string) => {
+  const handleAddComment = async (threadId: string) => {
     if (!newCommentText.trim() && !selectedGifUrl) return;
-
-    setThreads(prev =>
-      prev.map(t => {
-        if (t.id === threadId) {
-          const newComment = {
-            id: `c-${Date.now()}`,
-            author: currentUser?.name || 'Student',
-            text: newCommentText,
-            gifUrl: selectedGifUrl || undefined,
-            createdAt: 'Just now'
-          };
-          return {
-            ...t,
-            commentsCount: t.commentsCount + 1,
-            comments: [...t.comments, newComment]
-          };
-        }
-        return t;
-      })
-    );
-
-    setNewCommentText('');
-    setSelectedGifUrl(null);
-    setShowGifPicker(false);
+    try {
+      await addCommentToDiscussion(threadId, {
+        author: currentUser?.name || 'Student',
+        text: newCommentText,
+        gifUrl: selectedGifUrl || undefined
+      });
+      setNewCommentText('');
+      setSelectedGifUrl(null);
+      setShowGifPicker(false);
+      loadDiscussionsFromDB();
+    } catch (err) {
+      console.error('Comment failed:', err);
+    }
   };
 
-  const handleCreateThread = (e: React.FormEvent) => {
+  const handleCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!threadTitle || !threadContent) return;
 
-    const newT: DiscussionThread = {
-      id: `disc-${Date.now()}`,
-      authorName: currentUser?.name || 'Campus Member',
-      authorRole: currentUser?.role || 'Student',
-      authorAvatar: currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-      title: threadTitle,
-      content: threadContent,
-      category: threadCategory,
-      upvotes: 1,
-      hasUpvoted: true,
-      commentsCount: 0,
-      createdAt: 'Just now',
-      comments: []
-    };
-
-    setThreads([newT, ...threads]);
-    setThreadTitle('');
-    setThreadContent('');
-    setShowCreateThread(false);
+    try {
+      await createDiscussion({
+        authorName: currentUser?.name || 'Campus Member',
+        authorRole: currentUser?.role || 'Student',
+        authorAvatar: currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+        title: threadTitle,
+        content: threadContent,
+        category: threadCategory
+      });
+      setThreadTitle('');
+      setThreadContent('');
+      setShowCreateThread(false);
+      loadDiscussionsFromDB();
+    } catch (err) {
+      alert('Failed to publish thread');
+    }
   };
 
   const filteredThreads = threads.filter(t => {
@@ -187,20 +134,20 @@ export const DiscussionsPage: React.FC = () => {
   });
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 animate-fadeIn text-slate-900">
-      {/* Top Banner & Title */}
+    <div className="max-w-5xl mx-auto px-4 py-6 space-y-6 animate-fadeIn text-slate-900 font-sans">
+      {/* Top Header */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-zen flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="bg-teal-50 text-teal-700 border border-teal-200 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
-              <MessageSquare className="w-3.5 h-3.5" /> Public Campus Forum
+              <MessageSquare className="w-3.5 h-3.5" /> Public Campus Forum (MongoDB Synced)
             </span>
           </div>
           <h1 className="text-3xl font-extrabold font-display text-slate-900">
             Public Discussions
           </h1>
           <p className="text-sm text-slate-500 mt-1 max-w-lg">
-            Ask questions, share activity points guidance, and discuss campus opportunities with peers & advisors.
+            Ask questions, share activity points guidance, and discuss campus opportunities stored live in MongoDB.
           </p>
         </div>
 
@@ -213,9 +160,8 @@ export const DiscussionsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Filter Category Bar & Search */}
+      {/* Category Pills & Search */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        {/* Category Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {categories.map((cat) => (
             <button
@@ -232,7 +178,6 @@ export const DiscussionsPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Search Input */}
         <div className="relative min-w-[240px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -245,14 +190,14 @@ export const DiscussionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Discussion Threads List */}
+      {/* Threads List */}
       <div className="space-y-4">
         {filteredThreads.map((thread) => (
           <div
-            key={thread.id}
+            key={thread._id}
             className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4 hover:border-slate-300 transition-all"
           >
-            {/* Thread Header */}
+            {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img
@@ -267,7 +212,7 @@ export const DiscussionsPage: React.FC = () => {
                       {thread.authorRole}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-400">{thread.createdAt}</p>
+                  <p className="text-[10px] text-slate-400">MongoDB Document</p>
                 </div>
               </div>
 
@@ -276,7 +221,7 @@ export const DiscussionsPage: React.FC = () => {
               </span>
             </div>
 
-            {/* Thread Body */}
+            {/* Title & Body */}
             <div>
               <h3 className="text-base font-bold text-slate-900 leading-snug mb-1">
                 {thread.title}
@@ -286,27 +231,23 @@ export const DiscussionsPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Action Bar (Upvotes, Comments, Share - NO EMOJIS) */}
+            {/* Action Bar */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => handleToggleUpvote(thread.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all font-semibold ${
-                    thread.hasUpvoted
-                      ? 'bg-teal-50 border-teal-200 text-teal-700 font-bold'
-                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                  }`}
+                  onClick={() => handleToggleUpvote(thread._id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold transition-all"
                 >
-                  <ThumbsUp className={`w-4 h-4 ${thread.hasUpvoted ? 'fill-teal-700' : ''}`} />
+                  <ThumbsUp className="w-4 h-4 text-teal-700 fill-teal-700" />
                   <span>{thread.upvotes} Upvotes</span>
                 </button>
 
                 <button
-                  onClick={() => setActiveThreadId(activeThreadId === thread.id ? null : thread.id)}
+                  onClick={() => setActiveThreadId(activeThreadId === thread._id ? null : thread._id)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 font-semibold transition-all"
                 >
                   <MessageSquare className="w-4 h-4 text-indigo-600" />
-                  <span>{thread.commentsCount} Comments</span>
+                  <span>{thread.comments ? thread.comments.length : 0} Comments</span>
                 </button>
               </div>
 
@@ -322,25 +263,24 @@ export const DiscussionsPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Expanded Comments Section */}
-            {activeThreadId === thread.id && (
+            {/* Expanded Comments */}
+            {activeThreadId === thread._id && (
               <div className="pt-4 border-t border-slate-100 space-y-4 animate-fadeIn">
-                <div className="space-y-3">
-                  {thread.comments.map((comment) => (
-                    <div key={comment.id} className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                <div className="space-y-2.5">
+                  {thread.comments && thread.comments.map((c, idx) => (
+                    <div key={idx} className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-slate-900">{comment.author}</span>
-                        <span className="text-[10px] text-slate-400">{comment.createdAt}</span>
+                        <span className="font-bold text-slate-900">{c.author}</span>
                       </div>
-                      <p className="text-xs text-slate-700">{comment.text}</p>
-                      {comment.gifUrl && (
-                        <img src={comment.gifUrl} alt="GIF" className="w-48 h-28 object-cover rounded-lg mt-2 border border-slate-200" />
+                      <p className="text-xs text-slate-700">{c.text}</p>
+                      {c.gifUrl && (
+                        <img src={c.gifUrl} alt="GIF" className="w-48 h-28 object-cover rounded-lg mt-2 border border-slate-200" />
                       )}
                     </div>
                   ))}
                 </div>
 
-                {/* Comment Input Box */}
+                {/* Comment Input */}
                 <div className="space-y-2">
                   {selectedGifUrl && (
                     <div className="relative inline-block">
@@ -374,7 +314,7 @@ export const DiscussionsPage: React.FC = () => {
 
                     <button
                       type="button"
-                      onClick={() => handleAddComment(thread.id)}
+                      onClick={() => handleAddComment(thread._id)}
                       className="py-2.5 px-4 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1"
                     >
                       <Send className="w-4 h-4" />
@@ -382,7 +322,6 @@ export const DiscussionsPage: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* GIF Picker Container */}
                   {showGifPicker && (
                     <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-md space-y-2">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Campus GIF</p>
@@ -413,7 +352,7 @@ export const DiscussionsPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Create New Thread Modal */}
+      {/* Modal for Creating Thread */}
       {showCreateThread && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md animate-fadeIn">
           <div className="glass-modal w-full max-w-md rounded-3xl p-6 shadow-zen-lg relative border border-slate-200 text-slate-900 bg-white">
