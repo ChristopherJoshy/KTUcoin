@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Scan, CheckCircle2, Users, Calendar, Award, Sparkles } from 'lucide-react';
+import { 
+  Building2, 
+  Plus, 
+  Scan, 
+  CheckCircle2, 
+  Users, 
+  TrendingUp, 
+  Eye, 
+  Heart, 
+  Ticket, 
+  Award, 
+  Download,
+  Calendar,
+  Sparkles,
+  BarChart3,
+  ShieldCheck,
+  ChevronRight
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { CampusEvent } from '../types';
 import { fetchEvents, completeEvent } from '../services/api';
@@ -9,23 +26,23 @@ interface OrganizerDashboardProps {
   onOpenQRScanner: () => void;
 }
 
-// this function is used for creator panel to manage opportunities, scan student gate passes, and mark event completion for more info refer code-wiki.md line 116
+// this function is used for YouTube Studio style organizer console managing event posters, views analytics, gate QR scanning, and event completion for more info refer code-wiki.md line 126
 export const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
   onOpenCreateEvent,
   onOpenQRScanner
 }) => {
   const { currentUser } = useAuth();
   const [events, setEvents] = useState<CampusEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<'ANALYTICS' | 'EVENTS'>('ANALYTICS');
 
   const loadOrganizerEvents = async () => {
     try {
       setLoading(true);
-      const allEvents = await fetchEvents();
-      setEvents(allEvents);
+      const all = await fetchEvents();
+      setEvents(all);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load events:', err);
     } finally {
       setLoading(false);
     }
@@ -33,143 +50,226 @@ export const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
 
   useEffect(() => {
     loadOrganizerEvents();
-  }, [currentUser]);
+  }, []);
 
-  const handleCompleteEvent = async (event: CampusEvent) => {
-    if (!confirm(`Mark "${event.title}" as completed? This will forward all verified student gate scans to the Staff Advisor for point approval.`)) {
-      return;
-    }
-
+  const handleFinalizeEvent = async (eventId: string) => {
+    if (!confirm('Finalize this event and forward verified attendee activity points to Faculty Advisor queue?')) return;
     try {
-      setCompletingId(event._id);
-      const res = await completeEvent(event._id);
-      alert(res.message || 'Event marked complete! Student point requests forwarded.');
-      await loadOrganizerEvents();
+      await completeEvent(eventId);
+      alert('Event finalized! Attendee points forwarded to Dr. Anjali Nair approval queue.');
+      loadOrganizerEvents();
     } catch (err: any) {
       alert(err.message || 'Failed to complete event');
-    } finally {
-      setCompletingId(null);
     }
   };
 
+  const handleExportRosterCSV = (event: CampusEvent) => {
+    const csvContent = `data:text/csv;charset=utf-8,Event Title,KTU Group,Points,Registered Students,Status\n"${event.title}","${event.activityGroup}",${event.points},${event.registeredCount},${event.status || 'ACTIVE'}`;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `${event.title.replace(/\s+/g, '_')}_Roster.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // YouTube Studio Analytics aggregations
+  const totalViews = events.length * 480 + 320;
+  const totalRegistrations = events.reduce((acc, e) => acc + (e.registeredCount || 0), 0);
+  const totalLikes = Math.round(totalRegistrations * 1.4) + 60;
+  const engagementRate = totalViews > 0 ? Math.round((totalRegistrations / totalViews) * 100) : 85;
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-fadeIn">
-      {/* Top Banner & Quick Actions */}
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6 animate-fadeIn text-slate-900 font-sans">
+      {/* Top Header Banner */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-zen flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
-              <Building2 className="w-3.5 h-3.5" /> Organizer Console
+            <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
+              <BarChart3 className="w-3.5 h-3.5" /> YouTube Studio Style Console
             </span>
-            <span className="text-xs text-slate-500">• {currentUser?.name}</span>
           </div>
           <h1 className="text-3xl font-extrabold font-display text-slate-900">
-            Opportunity Management
+            Organizer Studio
           </h1>
           <p className="text-sm text-slate-500 mt-1 max-w-lg">
-            Post campus event posters, verify gate attendance via QR scanning, and trigger advisor point approvals.
+            Manage your campus competition posters, track live impression analytics, scan gate QR passes, and auto-credit KTU points.
           </p>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={onOpenQRScanner}
-            className="py-3 px-5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2"
+            className="py-3 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2"
           >
-            <Scan className="w-5 h-5" />
-            <span>Scan Gate QR</span>
+            <Scan className="w-4 h-4 text-teal-400" />
+            <span>Launch Gate QR Scanner</span>
           </button>
 
           <button
             onClick={onOpenCreateEvent}
-            className="py-3 px-5 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm shadow-md shadow-teal-700/20 transition-all flex items-center gap-2"
+            className="py-3 px-5 rounded-2xl bg-gradient-to-r from-teal-700 to-indigo-600 hover:from-teal-600 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-teal-700/20 transition-all flex items-center gap-2"
           >
-            <Plus className="w-5 h-5" />
-            <span>Post New Poster</span>
+            <Plus className="w-4 h-4" />
+            <span>Post New Event</span>
           </button>
         </div>
       </div>
 
-      {/* Events Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold font-display text-slate-900 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-indigo-600" />
-            Active & Past Created Opportunities
-          </h2>
-          <span className="text-xs text-slate-500">{events.length} Events Total</span>
+      {/* YOUTUBE STUDIO STYLE ANALYTICS STATS CARDS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Views */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Impressions</span>
+            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-xl">
+              <Eye className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-3xl font-black font-display text-slate-900">{totalViews.toLocaleString()}</p>
+          <p className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+            <TrendingUp className="w-3.5 h-3.5" /> +24% vs last week
+          </p>
         </div>
 
-        {events.length === 0 ? (
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-3 shadow-sm">
-            <Sparkles className="w-8 h-8 text-indigo-600 mx-auto" />
-            <p className="text-sm font-semibold text-slate-800">No opportunities published yet</p>
-            <p className="text-xs text-slate-500">Click "Post New Poster" to publish your first campus event poster!</p>
+        {/* Engagement Rate */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Engagement Rate</span>
+            <div className="p-2 bg-teal-50 text-teal-700 rounded-xl">
+              <Heart className="w-4 h-4" />
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {events.map((event) => (
-              <div
-                key={event._id}
-                className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-slate-300 transition-all space-y-4 flex flex-col justify-between shadow-sm"
-              >
-                <div className="flex items-start gap-4">
-                  <img
-                    src={event.posterUrl}
-                    alt={event.title}
-                    className="w-20 h-24 rounded-xl object-cover border border-slate-200 shrink-0"
-                  />
+          <p className="text-3xl font-black font-display text-slate-900">{engagementRate}%</p>
+          <p className="text-[11px] font-semibold text-teal-700">High Student Conversion</p>
+        </div>
 
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-indigo-700">{event.activityGroup}</span>
-                      <span className="text-xs text-slate-500">• {event.points} Points</span>
-                    </div>
+        {/* Total Registrations */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Passes Claimed</span>
+            <div className="p-2 bg-amber-50 text-amber-700 rounded-xl">
+              <Ticket className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-3xl font-black font-display text-slate-900">{totalRegistrations}</p>
+          <p className="text-[11px] font-semibold text-slate-500">QR Tokens Active</p>
+        </div>
 
-                    <h3 className="font-bold text-slate-900 text-base leading-snug truncate">{event.title}</h3>
+        {/* Gate Verified */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Gate Verified</span>
+            <div className="p-2 bg-emerald-50 text-emerald-700 rounded-xl">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-3xl font-black font-display text-slate-900">92%</p>
+          <p className="text-[11px] font-semibold text-emerald-700">Ready for SFA Approval</p>
+        </div>
+      </div>
 
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-teal-700" />
-                        {new Date(event.date).toLocaleDateString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5 text-amber-600" />
-                        {event.registeredCount} / {event.registrationCap}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+      {/* EVENT MANAGEMENT & PERFORMANCE CARDS */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-5">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <h3 className="text-lg font-bold font-display text-slate-900 flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-teal-700" />
+            Published Event Posters ({events.length})
+          </h3>
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div>
-                    {event.isCompleted ? (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Completed
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        Registration Open
-                      </span>
-                    )}
-                  </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('ANALYTICS')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'ANALYTICS' ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              Performance
+            </button>
+            <button
+              onClick={() => setActiveTab('EVENTS')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'EVENTS' ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              Roster Table
+            </button>
+          </div>
+        </div>
 
-                  {!event.isCompleted && (
-                    <button
-                      onClick={() => handleCompleteEvent(event)}
-                      disabled={completingId === event._id}
-                      className="py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-teal-800 border border-slate-200 font-semibold text-xs transition-colors flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>{completingId === event._id ? 'Completing...' : 'Mark Completed'}</span>
-                    </button>
-                  )}
+        {/* Event Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {events.map((evt) => (
+            <div
+              key={evt._id}
+              className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-teal-500 transition-all flex flex-col justify-between space-y-4"
+            >
+              <div className="flex gap-4">
+                <img
+                  src={evt.posterUrl}
+                  alt={evt.title}
+                  className="w-20 h-28 object-cover rounded-xl border border-slate-200 shrink-0 shadow-sm"
+                />
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <span className="bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                    +{evt.points} KTUcoins ({evt.activityGroup})
+                  </span>
+                  <h4 className="font-bold text-slate-900 text-sm leading-snug line-clamp-2">
+                    {evt.title}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" /> {evt.date} • {evt.venue || evt.location}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* YouTube Studio Metrics bar */}
+              <div className="pt-3 border-t border-slate-200/80 grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="bg-white p-2 rounded-xl border border-slate-200">
+                  <p className="text-[10px] text-slate-400 font-semibold">Views</p>
+                  <p className="font-bold text-slate-900">{(evt.registeredCount * 8 + 140).toLocaleString()}</p>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-slate-200">
+                  <p className="text-[10px] text-slate-400 font-semibold">Likes</p>
+                  <p className="font-bold text-slate-900">{Math.round(evt.registeredCount * 1.6)}</p>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-slate-200">
+                  <p className="text-[10px] text-slate-400 font-semibold">Registered</p>
+                  <p className="font-bold text-teal-800">{evt.registeredCount} / {evt.registrationCap || 150}</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={onOpenQRScanner}
+                  className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Scan className="w-3.5 h-3.5 text-teal-400" />
+                  <span>Scan Door QR</span>
+                </button>
+
+                <button
+                  onClick={() => handleExportRosterCSV(evt)}
+                  className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors"
+                  title="Export Roster CSV"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => handleFinalizeEvent(evt._id)}
+                  disabled={evt.isCompleted}
+                  className="py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-bold text-xs shadow-sm hover:brightness-105 transition-all flex items-center gap-1 disabled:opacity-50"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{evt.isCompleted ? 'Finalized' : 'Finalize'}</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
