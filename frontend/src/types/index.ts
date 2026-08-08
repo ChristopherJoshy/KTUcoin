@@ -1,5 +1,5 @@
 export type UserRole = 'STUDENT' | 'ORGANIZER' | 'TEACHER';
-export type ActivityGroup = 'Group I' | 'Group II' | 'Group III';
+export type ActivityGroup = 'Group I Social' | 'Group II Tech' | 'Group III Arts';
 export type RegistrationStatus = 'REGISTERED' | 'ATTENDED' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
 
 export interface User {
@@ -23,12 +23,15 @@ export interface CampusEvent {
   activityGroup: ActivityGroup;
   points: number;
   date: string;
-  location: string;
+  location?: string;
+  venue?: string;
   posterUrl: string;
-  registrationCap: number;
+  registrationCap?: number;
+  capacity?: number;
   registeredCount: number;
-  isCompleted: boolean;
-  createdAt: string;
+  isCompleted?: boolean;
+  status?: string;
+  createdAt?: string;
 }
 
 export interface Registration {
