@@ -1,13 +1,16 @@
 import mongoose from 'mongoose';
 
-// this function is used for connecting backend to MongoDB database for more info refer code-wiki.md line 10
-export const connectDB = async (): Promise<void> => {
+// this function is used for connecting backend to MongoDB database without process exit on error for more info refer code-wiki.md line 10
+export const connectDB = async (): Promise<boolean> => {
   try {
     const connStr = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campuspulse';
-    await mongoose.connect(connStr);
+    await mongoose.connect(connStr, {
+      serverSelectionTimeoutMS: 3000
+    });
     console.log(`[Database] MongoDB Connected to ${connStr}`);
+    return true;
   } catch (error) {
-    console.error(`[Database] Connection Error:`, error);
-    process.exit(1);
+    console.warn(`[Database] Local MongoDB Warning: Connection timed out or service offline. Operating in fallback active mode.`);
+    return false;
   }
 };
