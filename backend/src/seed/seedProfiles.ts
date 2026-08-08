@@ -37,76 +37,77 @@ export const seedInitialData = async () => {
     const organizer = await User.findOne({ role: 'ORGANIZER' });
     const organizerId = organizer ? organizer._id : undefined;
 
-    // Refresh default competition posters in MongoDB
-    await Event.deleteMany({});
-    await Event.create([
-      {
-        title: 'Nexus Wars: AI Agents Arena Challenge',
-        description: 'AI AGENTS. ONE UNIVERSE. NO MERCY. Build autonomous AI agents competing in real-time strategic game loops. Prize Pool: 1st ₹1111, 2nd ₹777, 3rd ₹555. Grants +50 KTU Activity Points under Group III (Hackathons & Innovations).',
-        posterUrl: '/posters/comp5.jpeg',
-        points: 50,
-        activityGroup: 'Group III Arts',
-        date: '2026-07-31',
-        venue: 'SJCET Palai AI Arena',
-        capacity: 100,
-        registeredCount: 68,
-        organizerId,
-        status: 'UPCOMING'
-      },
-      {
-        title: 'Tech4Good: Ideas Today, Impact Tomorrow',
-        description: 'Join SIGHT Quest Orientation Session with Dr. Arun P (Head, Dept. of ECE, SJCET). Explore how AI can drive meaningful humanitarian social impact, learn competition format, and submit proposal ideas.',
-        posterUrl: '/posters/comp1.jpeg',
-        points: 20,
-        activityGroup: 'Group I Social',
-        date: '2026-08-11',
-        venue: 'Online / SJCET Seminar Hall',
-        capacity: 250,
-        registeredCount: 142,
-        organizerId,
-        status: 'UPCOMING'
-      },
-      {
-        title: 'Elite League: Women in Engineering Competitive Coding',
-        description: '7 Hybrid Sessions (6 Online Technical + 1 Offline LeetCode Practice). Learn competitive C programming from scratch (Variables, Loops, Arrays, Strings, Functions, Pointers). HackerRank assignments & Grand Finale prizes.',
-        posterUrl: '/posters/comp2.jpeg',
-        points: 30,
-        activityGroup: 'Group II Tech',
-        date: '2026-08-18',
-        venue: 'IEEE Computer Society Lab, SJCET Palai',
-        capacity: 120,
-        registeredCount: 85,
-        organizerId,
-        status: 'UPCOMING'
-      },
-      {
-        title: 'Elite League: 4-Week Competitive Programming League',
-        description: 'Intensive 4-week competitive coding league for female engineering students. Master data structures, algorithmic efficiency, and contest strategies. Includes verified KTU Activity Points pass.',
-        posterUrl: '/posters/comp3.jpeg',
-        points: 40,
-        activityGroup: 'Group II Tech',
-        date: '2026-08-08',
-        venue: 'Hybrid (Online Contests + Campus Finale)',
-        capacity: 150,
-        registeredCount: 110,
-        organizerId,
-        status: 'UPCOMING'
-      },
-      {
-        title: 'IEEE SIGHT Membership Development Session',
-        description: 'Orientation session led by Kritthik Rajeev Nair (Chair), Rijo Shaji (Vice Chair), and Alan K Albin (Secretary). Discover humanitarian technology grants, social project mentorship, and KTU activity point credits.',
-        posterUrl: '/posters/comp4.jpeg',
-        points: 20,
-        activityGroup: 'Group I Social',
-        date: '2026-08-05',
-        venue: 'Campus Auditorium, Open to All Branches',
-        capacity: 300,
-        registeredCount: 195,
-        organizerId,
-        status: 'UPCOMING'
-      }
-    ]);
-    console.log('Seed: 5 Real SJCET IEEE Competition events seeded in MongoDB');
+    const eventCount = await Event.countDocuments();
+    if (eventCount === 0) {
+      await Event.create([
+        {
+          title: 'Nexus Wars: AI Agents Arena Challenge',
+          description: 'AI AGENTS. ONE UNIVERSE. NO MERCY. Build autonomous AI agents competing in real-time strategic game loops. Prize Pool: 1st ₹1111, 2nd ₹777, 3rd ₹555. Grants +50 KTU Activity Points under Group III (Hackathons & Innovations).',
+          posterUrl: '/posters/comp5.jpeg',
+          points: 50,
+          activityGroup: 'Group III Arts',
+          date: '2026-07-31',
+          venue: 'SJCET Palai AI Arena',
+          capacity: 100,
+          registeredCount: 68,
+          organizerId,
+          status: 'UPCOMING'
+        },
+        {
+          title: 'Tech4Good: Ideas Today, Impact Tomorrow',
+          description: 'Join SIGHT Quest Orientation Session with Dr. Arun P (Head, Dept. of ECE, SJCET). Explore how AI can drive meaningful humanitarian social impact, learn competition format, and submit proposal ideas.',
+          posterUrl: '/posters/comp1.jpeg',
+          points: 20,
+          activityGroup: 'Group I Social',
+          date: '2026-08-11',
+          venue: 'Online / SJCET Seminar Hall',
+          capacity: 250,
+          registeredCount: 142,
+          organizerId,
+          status: 'UPCOMING'
+        },
+        {
+          title: 'Elite League: Women in Engineering Competitive Coding',
+          description: '7 Hybrid Sessions (6 Online Technical + 1 Offline LeetCode Practice). Learn competitive C programming from scratch (Variables, Loops, Arrays, Strings, Functions, Pointers). HackerRank assignments & Grand Finale prizes.',
+          posterUrl: '/posters/comp2.jpeg',
+          points: 30,
+          activityGroup: 'Group II Tech',
+          date: '2026-08-18',
+          venue: 'IEEE Computer Society Lab, SJCET Palai',
+          capacity: 120,
+          registeredCount: 85,
+          organizerId,
+          status: 'UPCOMING'
+        },
+        {
+          title: 'Elite League: 4-Week Competitive Programming League',
+          description: 'Intensive 4-week competitive coding league for female engineering students. Master data structures, algorithmic efficiency, and contest strategies. Includes verified KTU Activity Points pass.',
+          posterUrl: '/posters/comp3.jpeg',
+          points: 40,
+          activityGroup: 'Group II Tech',
+          date: '2026-08-08',
+          venue: 'Hybrid (Online Contests + Campus Finale)',
+          capacity: 150,
+          registeredCount: 110,
+          organizerId,
+          status: 'UPCOMING'
+        },
+        {
+          title: 'IEEE SIGHT Membership Development Session',
+          description: 'Orientation session led by Kritthik Rajeev Nair (Chair), Rijo Shaji (Vice Chair), and Alan K Albin (Secretary). Discover humanitarian technology grants, social project mentorship, and KTU activity point credits.',
+          posterUrl: '/posters/comp4.jpeg',
+          points: 20,
+          activityGroup: 'Group I Social',
+          date: '2026-08-05',
+          venue: 'Campus Auditorium, Open to All Branches',
+          capacity: 300,
+          registeredCount: 195,
+          organizerId,
+          status: 'UPCOMING'
+        }
+      ]);
+      console.log('Seed: 5 Real SJCET IEEE Competition events seeded in MongoDB');
+    }
 
     const discussionCount = await Discussion.countDocuments();
     if (discussionCount === 0) {
