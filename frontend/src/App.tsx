@@ -86,8 +86,7 @@ const MainAppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-teal-500 selection:text-white">
-      {/* Top Hackathon Demo Auth Banner */}
-      <DemoAuthBanner onOpenCreateProfile={() => setIsCreateProfileOpen(true)} />
+
 
       {/* Desktop Left Sidebar & Mobile Bottom Navigation Bar */}
       <Sidebar
