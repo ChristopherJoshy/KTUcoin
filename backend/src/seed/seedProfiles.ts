@@ -5,36 +5,40 @@ import Discussion from '../models/Discussion';
 // this function is used for seeding default profiles, real competition poster events, and Kerala campus discussion threads into MongoDB for more info refer code-wiki.md line 14
 export const seedInitialData = async () => {
   try {
-    const userCount = await User.countDocuments();
-    if (userCount === 0) {
-      await User.create([
-        {
-          name: 'Rahul V. S.',
-          email: 'rahul@ktu.edu.in',
-          role: 'STUDENT',
-          studentId: 'TVE21CS045',
-          department: 'College of Engineering Trivandrum (CET)',
-          avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150'
-        },
-        {
-          name: 'IEEE Student Branch Council',
-          email: 'ieee@ktu.edu.in',
-          role: 'ORGANIZER',
-          department: 'SJCET Palai & CET Campus Council',
-          avatarUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150'
-        },
-        {
-          name: 'Dr. Anjali Nair',
-          email: 'anjali.nair@ktu.edu.in',
-          role: 'TEACHER',
-          department: 'Senior Faculty Advisor (SFA), CSE Dept',
-          avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
-        }
-      ]);
-      console.log('Seed: Default profiles created in MongoDB');
-    }
+    const defaultUsers = [
+      {
+        name: 'Rahul V. S.',
+        email: 'rahul@ktu.edu.in',
+        role: 'STUDENT',
+        studentId: 'TVE21CS045',
+        department: 'College of Engineering Trivandrum (CET)',
+        avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150'
+      },
+      {
+        name: 'IEEE Student Branch Council',
+        email: 'ieee@ktu.edu.in',
+        role: 'ORGANIZER',
+        department: 'SJCET Palai & CET Campus Council',
+        avatarUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150'
+      },
+      {
+        name: 'Dr. Anjali Nair',
+        email: 'anjali.nair@ktu.edu.in',
+        role: 'TEACHER',
+        department: 'Senior Faculty Advisor (SFA), CSE Dept',
+        avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
+      }
+    ];
 
-    const organizer = await User.findOne({ role: 'ORGANIZER' });
+    for (const user of defaultUsers) {
+      await User.findOneAndUpdate({ email: user.email }, user, { upsert: true });
+    }
+    console.log('Seed: Default profiles upserted in MongoDB');
+
+    const organizer =
+      (await User.findOne({ role: 'ORGANIZER' })) ||
+      (await User.findOne({})) ||
+      (await User.create(defaultUsers))[0];
     const organizerId = organizer ? organizer._id : undefined;
 
     const eventCount = await Event.countDocuments();
