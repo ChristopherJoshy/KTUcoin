@@ -27,7 +27,7 @@ Discover (Poster Feed) ➔ Register ➔ Verified Attendance (QR Scan) ➔ Teache
   - **Group III**: Cultural / Arts / Competitions
 
 ### 2. Student Dashboard
-- Visual progress tracking toward the mandatory 100 KTU Activity Points graduation minimum.
+- Visual progress tracking toward the mandatory 120 KTU Activity Points graduation minimum.
 - Progress bars broken down across Group I, Group II, and Group III.
 - Registered event pass history with 1-click QR code display.
 

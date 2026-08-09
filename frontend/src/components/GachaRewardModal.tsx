@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { animate, createTimeline } from 'animejs';
-import { X, Award, Sparkles, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { X, Award, Sparkles, CheckCircle2 } from 'lucide-react';
 import { CoinLogo } from './CoinLogo';
 
 interface GachaRewardModalProps {
@@ -65,11 +65,11 @@ export const GachaRewardModal: React.FC<GachaRewardModalProps> = ({
 
       <div
         ref={cardRef}
-        className="glass-modal w-full max-w-sm rounded-3xl p-6 shadow-zen-lg relative border border-amber-300 text-slate-900 text-center flex flex-col items-center z-10 bg-white"
+        className="glass-modal w-full max-w-sm rounded-3xl p-6 shadow-zen-lg relative border border-amber-300 dark:border-amber-800 text-slate-900 dark:text-slate-50 text-center flex flex-col items-center z-10 bg-white dark:bg-slate-900"
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 rounded-full bg-slate-100 border border-slate-200 transition-colors"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -86,17 +86,17 @@ export const GachaRewardModal: React.FC<GachaRewardModalProps> = ({
           Points Unlocked
         </span>
 
-        <h2 className="text-4xl font-black font-display text-slate-900 tracking-tight">
+        <h2 className="text-4xl font-black font-display text-slate-900 dark:text-slate-50 tracking-tight">
           +{points} <span className="text-amber-500">KTUcoins</span>
         </h2>
 
-        <p className="text-xs text-slate-600 font-semibold mt-1 mb-4">
+        <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mt-1 mb-4">
           {activityGroup} Credited
         </p>
 
-        <div className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1 text-left text-xs mb-5">
-          <p className="text-slate-400 text-[10px]">Event Title</p>
-          <p className="font-bold text-slate-900 leading-snug">{title}</p>
+        <div className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-1 text-left text-xs mb-5">
+          <p className="text-slate-400 dark:text-slate-500 text-[10px]">Event Title</p>
+          <p className="font-bold text-slate-900 dark:text-slate-100 leading-snug">{title}</p>
         </div>
 
         <button

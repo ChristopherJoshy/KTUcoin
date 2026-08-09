@@ -1,26 +1,43 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
-import { getProfiles, createProfile } from '../controllers/authController';
-import { getAllEvents, getOrganizerEvents, createEvent } from '../controllers/eventController';
+import { getProfiles, createProfile } from '../controllers/authController.js';
+import { getAllEvents, getOrganizerEvents, createEvent } from '../controllers/eventController.js';
 import { 
   registerForEvent, 
   getStudentRegistrations, 
   scanQRCode, 
   completeEvent, 
-  getEventAttendees 
-} from '../controllers/registrationController';
+  getEventAttendees,
+  submitManualPointRequest
+} from '../controllers/registrationController.js';
 import { 
   getPendingApprovals, 
   approveRegistration, 
   rejectRegistration, 
-  getStudentRoster 
-} from '../controllers/teacherController';
+  getStudentRoster,
+  searchStudents,
+  assignStudentRole,
+  notifyStudentDeficiency
+} from '../controllers/teacherController.js';
 import { 
   getDiscussions, 
   createDiscussion, 
   upvoteDiscussion, 
   addCommentToDiscussion 
-} from '../controllers/discussionController';
+} from '../controllers/discussionController.js';
+import {
+  getNotifications,
+  sendNotification,
+  markNotificationRead,
+  updateUserProfile,
+  toggleFollowUser
+} from '../controllers/notificationController.js';
+import {
+  createPermissionLetter,
+  getAllLetters,
+  getStudentLetters,
+  decideLetter
+} from '../controllers/letterController.js';
 
 const router = Router();
 
@@ -39,24 +56,41 @@ export const setupRoutes = (): Router => {
   // Auth & Profiles
   router.get('/profiles', getProfiles);
   router.post('/profiles', createProfile);
+  router.put('/user/profile/:userId', updateUserProfile);
+  router.post('/user/follow', toggleFollowUser);
 
   // Events
   router.get('/events', getAllEvents);
   router.get('/events/organizer/:organizerId', getOrganizerEvents);
   router.post('/events', createEvent);
 
-  // Registrations & Door Scanner
+  // Registrations & Door Scanner & Manual Claims
   router.post('/register', registerForEvent);
+  router.post('/request-points', submitManualPointRequest);
   router.get('/registrations/student/:studentId', getStudentRegistrations);
   router.get('/registrations/event/:eventId', getEventAttendees);
   router.post('/scan-qr', scanQRCode);
   router.post('/complete-event', completeEvent);
 
-  // Teacher Approval & Roster
+  // Teacher Approval & Roster & Student Management
   router.get('/teacher/pending', getPendingApprovals);
   router.post('/teacher/approve', approveRegistration);
   router.post('/teacher/reject', rejectRegistration);
   router.get('/teacher/roster', getStudentRoster);
+  router.get('/teacher/students', searchStudents);
+  router.post('/teacher/assign-role', assignStudentRole);
+  router.post('/teacher/notify-deficiency', notifyStudentDeficiency);
+
+  // Notifications System
+  router.get('/notifications/:userId', getNotifications);
+  router.post('/notifications/send', sendNotification);
+  router.post('/notifications/:id/read', markNotificationRead);
+
+  // HOD Permission Letters
+  router.post('/letters', createPermissionLetter);
+  router.get('/letters', getAllLetters);
+  router.get('/letters/student/:studentId', getStudentLetters);
+  router.post('/letters/:id/decide', decideLetter);
 
   // Public Discussions
   router.get('/discussions', getDiscussions);

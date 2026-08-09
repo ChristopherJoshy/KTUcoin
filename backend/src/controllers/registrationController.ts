@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Registration from '../models/Registration.js';
 import Event from '../models/Event.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 
 // this function is used for registering a student for an event and generating a unique QR code token for more info refer code-wiki.md line 32
 export const registerForEvent = async (req: Request, res: Response): Promise<void> => {
@@ -149,5 +150,57 @@ export const getEventAttendees = async (req: Request, res: Response): Promise<vo
     res.json({ success: true, attendees });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch attendees', error });
+  }
+};
+
+// this function is used for submitting a manual activity point request from student to staff advisor queue for more info refer code-wiki.md line 41
+export const submitManualPointRequest = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { studentId, claimTitle, claimGroup, claimPoints, proofUrl, proofDescription } = req.body;
+
+    if (!studentId || !claimTitle || !claimGroup || !claimPoints) {
+      res.status(400).json({ success: false, message: 'Missing required manual claim fields' });
+      return;
+    }
+
+    const student = await User.findById(studentId);
+    if (!student) {
+      res.status(404).json({ success: false, message: 'Student not found' });
+      return;
+    }
+
+    const qrCodeToken = `KTU-MANUAL-${studentId.toString().slice(-6)}-${Date.now().toString(36).toUpperCase()}`;
+
+    const registration = await Registration.create({
+      studentId,
+      qrCodeToken,
+      status: 'PENDING_APPROVAL',
+      isManualClaim: true,
+      claimTitle,
+      claimGroup,
+      claimPoints: Number(claimPoints),
+      proofUrl: proofUrl || '',
+      proofDescription: proofDescription || 'Manual activity submission with proof document attached.'
+    });
+
+    // Find teachers/staff advisors to notify
+    const teachers = await User.find({ role: 'TEACHER' });
+    for (const teacher of teachers) {
+      await Notification.create({
+        recipientId: teacher._id,
+        senderName: student.name,
+        title: 'New Activity Point Approval Request',
+        message: `${student.name} (${student.studentId || 'Student'}) submitted a claim for "${claimTitle}" (+${claimPoints} ${claimGroup} pts).`,
+        type: 'VERIFICATION'
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Point request submitted to your Staff Advisor approval queue!',
+      registration
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to submit point request', error });
   }
 };

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://render.com/schema/render.yaml.json",
+  "services": [
+    {
+      "type": "web",
+      "name": "ktucoins-api",
+      "runtime": "node",
+      "rootDir": "backend",
+      "region": "oregon",
+      "plan": "free",
+      "branch": "main",
+      "buildCommand": "npm install && npm run build",
+      "startCommand": "node dist/server.js",
+      "healthCheckPath": "/api/health",
+      "autoDeployTrigger": "commit",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "MONGO_URI",
+          "sync": false
+        }
+      ]
+    }
+  ]
+}

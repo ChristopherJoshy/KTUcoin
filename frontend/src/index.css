@@ -3,33 +3,74 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --surface: #FFFFFF;
+    --surface-soft: #F1F5F9;
+    --surface-subtle: #F8FAFC;
+    --border: #E2E8F0;
+    --border-strong: #CBD5E1;
+    --ink: #0F172A;
+    --ink-muted: #64748B;
+    color-scheme: light;
+  }
+
+  .dark {
+    --surface: #0F172A;
+    --surface-soft: #1E293B;
+    --surface-subtle: #0B1220;
+    --border: #1E293B;
+    --border-strong: #334155;
+    --ink: #F1F5F9;
+    --ink-muted: #94A3B8;
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
   body {
-    background-color: #F8FAFC;
-    color: #0F172A;
+    background-color: var(--surface-subtle);
+    color: var(--ink);
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Consistent native form control theming */
+  input, select, textarea {
+    color-scheme: inherit;
+  }
+
+  /* Visible keyboard focus for accessibility */
+  :focus-visible {
+    outline: 2px solid #0F766E;
+    outline-offset: 2px;
+    border-radius: 6px;
   }
 }
 
-/* Custom scrollbars for clean dashboards */
+/* Custom scrollbars for both themes */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: var(--border-strong);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: var(--ink-muted);
 }
 
-/* Zen Glassmorphism & elevation helpers */
+/* Elevated surface helpers */
 .glass-panel {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
@@ -38,10 +79,27 @@
   box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
 }
 
-.glass-modal {
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.1);
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: #1E293B;
+}
+
+/* Shared input style used across forms */
+.form-input {
+  @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-teal-600 dark:focus:border-teal-400 focus:ring-2 focus:ring-teal-600/10 dark:focus:ring-teal-400/10 transition-colors;
+}
+
+/* No horizontal overflow anywhere */
+#root {
+  min-height: 100dvh;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

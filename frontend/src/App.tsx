@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { DemoAuthBanner } from './components/DemoAuthBanner';
 import { Sidebar } from './components/Sidebar';
 import { LoginScreen } from './components/LoginScreen';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -11,16 +10,21 @@ import { QRModal } from './components/QRModal';
 import { QRScannerModal } from './components/QRScannerModal';
 import { CreateEventModal } from './components/CreateEventModal';
 import { CreateProfileModal } from './components/CreateProfileModal';
+import { UserProfileModal } from './components/UserProfileModal';
+import { NotificationsModal } from './components/NotificationsModal';
+import { RequestPointsModal } from './components/RequestPointsModal';
 import { StudentDashboard } from './pages/StudentDashboard';
 import { OrganizerDashboard } from './pages/OrganizerDashboard';
 import { TeacherDashboard } from './pages/TeacherDashboard';
 import { DiscussionsPage } from './pages/DiscussionsPage';
-import { CampusEvent, Registration } from './types';
+import { CampusEvent, Registration, User } from './types';
 import { fetchEvents } from './services/api';
+import { ToastProvider } from './components/ui/Toast';
+import { ConfirmProvider } from './components/ui/ConfirmDialog';
 
 // this function is used for main application container managing router tabs, anime.js gacha rewards, side navbar, and modals for more info refer code-wiki.md line 122
 const MainAppContent: React.FC = () => {
-  const { activeRole, currentUser } = useAuth();
+  const { activeRole, currentUser, refreshProfiles } = useAuth();
   
   const [isLoadingApp, setIsLoadingApp] = useState<boolean>(true);
   const [showLoginScreen, setShowLoginScreen] = useState<boolean>(true);
@@ -46,6 +50,10 @@ const MainAppContent: React.FC = () => {
   const [isQRScannerOpen, setIsQRScannerOpen] = useState<boolean>(false);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState<boolean>(false);
   const [isCreateProfileOpen, setIsCreateProfileOpen] = useState<boolean>(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
+  const [isRequestPointsOpen, setIsRequestPointsOpen] = useState<boolean>(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
+  const [profileModalUser, setProfileModalUser] = useState<User | null>(null);
 
   const loadEventsList = async () => {
     try {
@@ -71,8 +79,21 @@ const MainAppContent: React.FC = () => {
     }
   }, [activeRole]);
 
+  const handleOpenUserProfile = (userToView?: User) => {
+    setProfileModalUser(userToView || currentUser);
+    setIsProfileModalOpen(true);
+  };
+
   if (isLoadingApp) {
-    return <LoadingScreen onFinish={() => setIsLoadingApp(false)} />;
+    return (
+      <LoadingScreen
+        onFinish={() => {
+          // Refresh profiles now that the backend is confirmed reachable (Render cold start)
+          refreshProfiles();
+          setIsLoadingApp(false);
+        }}
+      />
+    );
   }
 
   if (showLoginScreen) {
@@ -85,9 +106,7 @@ const MainAppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-teal-500 selection:text-white">
-
-
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-teal-500 selection:text-white transition-colors duration-300">
       {/* Desktop Left Sidebar & Mobile Bottom Navigation Bar */}
       <Sidebar
         activeTab={activeTab}
@@ -95,40 +114,48 @@ const MainAppContent: React.FC = () => {
         onOpenCreateEvent={() => setIsCreateEventOpen(true)}
         onOpenQRScanner={() => setIsQRScannerOpen(true)}
         onOpenCreateProfile={() => setIsCreateProfileOpen(true)}
+        onOpenNotifications={() => setIsNotificationsOpen(true)}
+        onOpenProfile={() => handleOpenUserProfile()}
         onLogout={() => setShowLoginScreen(true)}
       />
 
-      {/* Main View Container (Padded left on desktop for side navbar) */}
-      <div className="md:pl-20 transition-all duration-300 flex-1 pb-16 md:pb-8">
-        <main className="max-w-7xl mx-auto py-4">
-          {activeTab === 'feed' && (
+      {/* Main View Container */}
+      <div className={`md:pl-20 transition-all duration-300 flex-1 ${activeTab === 'feed' ? 'bg-slate-50 dark:bg-slate-950 pb-16 md:pb-0 min-h-screen flex flex-col justify-center' : 'pb-16 md:pb-8'}`}>
+        {activeTab === 'feed' ? (
+          <div className="w-full flex-1 flex items-center justify-center">
             <PosterFeed
               events={events}
               onOpenDetails={(evt) => setSelectedEvent(evt)}
               onOpenQR={(reg) => setActiveQRRegistration(reg)}
               onRefreshEvents={loadEventsList}
             />
-          )}
+          </div>
+        ) : (
+          <main className="max-w-7xl mx-auto py-4">
+            {activeTab === 'discussions' && (
+              <DiscussionsPage />
+            )}
 
-          {activeTab === 'discussions' && (
-            <DiscussionsPage />
-          )}
+            {activeTab === 'student' && (
+              <StudentDashboard
+                onOpenQR={(reg) => setActiveQRRegistration(reg)}
+                onOpenRequestPoints={() => setIsRequestPointsOpen(true)}
+                onOpenProfile={() => handleOpenUserProfile()}
+              />
+            )}
 
-          {activeTab === 'student' && (
-            <StudentDashboard onOpenQR={(reg) => setActiveQRRegistration(reg)} />
-          )}
+            {activeTab === 'organizer' && (
+              <OrganizerDashboard
+                onOpenCreateEvent={() => setIsCreateEventOpen(true)}
+                onOpenQRScanner={() => setIsQRScannerOpen(true)}
+              />
+            )}
 
-          {activeTab === 'organizer' && (
-            <OrganizerDashboard
-              onOpenCreateEvent={() => setIsCreateEventOpen(true)}
-              onOpenQRScanner={() => setIsQRScannerOpen(true)}
-            />
-          )}
-
-          {activeTab === 'teacher' && (
-            <TeacherDashboard />
-          )}
-        </main>
+            {activeTab === 'teacher' && (
+              <TeacherDashboard />
+            )}
+          </main>
+        )}
       </div>
 
       {/* Anime.js Powered Gacha Summon Celebration Modal */}
@@ -148,7 +175,6 @@ const MainAppContent: React.FC = () => {
           const event = reg.eventId as any;
           setSelectedEvent(null);
           setActiveQRRegistration(reg);
-          // Trigger anime.js gacha summon animation!
           if (event) {
             setGachaReward({
               isOpen: true,
@@ -186,15 +212,35 @@ const MainAppContent: React.FC = () => {
         isOpen={isCreateProfileOpen}
         onClose={() => setIsCreateProfileOpen(false)}
       />
+
+      <UserProfileModal
+        user={profileModalUser}
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
+
+      <NotificationsModal
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+      />
+
+      <RequestPointsModal
+        isOpen={isRequestPointsOpen}
+        onClose={() => setIsRequestPointsOpen(false)}
+      />
     </div>
   );
 };
 
-// this function is used for initializing root App component with AuthContext wrapper for more info refer code-wiki.md line 124
+// this function is used for initializing root React application component with AuthProvider and global toast/confirm providers for more info refer code-wiki.md line 124
 export function App() {
   return (
     <AuthProvider>
-      <MainAppContent />
+      <ToastProvider>
+        <ConfirmProvider>
+          <MainAppContent />
+        </ConfirmProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }

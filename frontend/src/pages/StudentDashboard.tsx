@@ -1,15 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Award, QrCode, Calendar, CheckCircle2, Clock, Sparkles, Trophy, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Award, QrCode, Calendar, CheckCircle2, Clock, Trophy, Plus, GraduationCap, TicketCheck, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Registration } from '../types';
 import { fetchStudentRegistrations } from '../services/api';
+import { SkeletonLoader } from '../components/SkeletonLoader';
+import { PageHeader } from '../components/ui/PageHeader';
+import { StatCard } from '../components/ui/StatCard';
+import { Badge } from '../components/ui/Badge';
+import { EmptyState } from '../components/ui/EmptyState';
 
 interface StudentDashboardProps {
   onOpenQR: (registration: Registration) => void;
+  onOpenRequestPoints: () => void;
+  onOpenProfile: () => void;
 }
 
-// this function is used for rendering student points progress dashboard and registration pass history for more info refer code-wiki.md line 114
-export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onOpenQR }) => {
+// this function is used for rendering student points progress dashboard with activity group breakdown and entry passes for more info refer code-wiki.md line 114
+export const StudentDashboard: React.FC<StudentDashboardProps> = ({
+  onOpenQR,
+  onOpenRequestPoints,
+  onOpenProfile
+}) => {
   const { currentUser } = useAuth();
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,197 +42,217 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ onOpenQR }) 
     loadData();
   }, [currentUser]);
 
-  // Calculate Points Breakdown per activity group
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        <SkeletonLoader type="card" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <SkeletonLoader type="card" />
+          <SkeletonLoader type="card" />
+          <SkeletonLoader type="card" />
+          <SkeletonLoader type="card" />
+        </div>
+      </div>
+    );
+  }
+
+  // Points breakdown per activity group
   let group1 = 0;
   let group2 = 0;
   let group3 = 0;
 
   const approvedRegistrations = registrations.filter(r => r.status === 'APPROVED');
-  
-  approvedRegistrations.forEach((r) => {
-    const event = r.eventId as any;
-    if (event) {
-      if (event.activityGroup === 'Group I') group1 += event.points || 0;
-      else if (event.activityGroup === 'Group II') group2 += event.points || 0;
-      else if (event.activityGroup === 'Group III') group3 += event.points || 0;
+
+  approvedRegistrations.forEach(r => {
+    if (r.isManualClaim) {
+      if (r.claimGroup?.includes('Group I')) group1 += r.claimPoints || 0;
+      else if (r.claimGroup?.includes('Group II')) group2 += r.claimPoints || 0;
+      else if (r.claimGroup?.includes('Group III')) group3 += r.claimPoints || 0;
+    } else {
+      const event = r.eventId as any;
+      if (event) {
+        if (event.activityGroup?.includes('Group I')) group1 += event.points || 0;
+        else if (event.activityGroup?.includes('Group II')) group2 += event.points || 0;
+        else if (event.activityGroup?.includes('Group III')) group3 += event.points || 0;
+      }
     }
   });
 
   const totalPoints = group1 + group2 + group3;
-  const targetPoints = 100;
+  const targetPoints = 120;
   const progressPct = Math.min(100, Math.round((totalPoints / targetPoints) * 100));
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'REGISTERED':
-        return <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">Registered</span>;
+        return <Badge tone="teal">Registered</Badge>;
       case 'ATTENDED':
-        return <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">Gate Attended</span>;
+        return <Badge tone="indigo">Gate Attended</Badge>;
       case 'PENDING_APPROVAL':
-        return <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 animate-pulse">Pending Advisor</span>;
+        return <Badge tone="amber">Pending Advisor</Badge>;
       case 'APPROVED':
-        return <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Points Credited</span>;
+        return <Badge tone="emerald">Points Credited</Badge>;
       case 'REJECTED':
-        return <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200">Rejected</span>;
+        return <Badge tone="red">Rejected</Badge>;
       default:
         return null;
     }
   };
 
+  const groupCards = [
+    {
+      label: 'Group I',
+      sub: 'Social & NSS',
+      value: group1,
+      tone: 'teal' as const
+    },
+    {
+      label: 'Group II',
+      sub: 'Tech & Hackathons',
+      value: group2,
+      tone: 'emerald' as const
+    },
+    {
+      label: 'Group III',
+      sub: 'Arts & Sports',
+      value: group3,
+      tone: 'indigo' as const
+    }
+  ];
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-fadeIn">
-      {/* Top Welcome & Points Hero Banner */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-zen relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-gradient-to-br from-teal-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-semibold text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full">
-                {currentUser?.studentId || 'KTU Student'}
-              </span>
-              <span className="text-xs text-slate-500">• {currentUser?.department}</span>
-            </div>
-            <h1 className="text-3xl font-extrabold font-display text-slate-900">
-              {currentUser?.name}
-            </h1>
-            <p className="text-sm text-slate-500 mt-1 max-w-lg">
-              Automated KTU Activity Points tracking from discovery to teacher approval.
-            </p>
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
+      <PageHeader
+        badge={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge tone="teal" icon={<GraduationCap className="w-3 h-3" />}>
+              {currentUser?.studentId || 'KTU Student'}
+            </Badge>
+            {currentUser?.isCR && <Badge tone="amber">Class Representative (CR)</Badge>}
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {currentUser?.department} ({currentUser?.classGroup || 'S6 CSE A'})
+            </span>
           </div>
+        }
+        title={currentUser?.name || 'Student'}
+        description="Track KTU activity points from event discovery to advisor approval."
+        actions={
+          <button
+            onClick={onOpenRequestPoints}
+            className="py-2.5 px-4 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Submit Point Claim</span>
+          </button>
+        }
+      />
 
-          {/* Large Points Counter Box */}
-          <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex items-center gap-5 min-w-[260px] shadow-sm">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-tr from-teal-700 to-indigo-600 p-0.5 flex items-center justify-center shadow-md shadow-teal-700/10">
-              <div className="h-full w-full bg-white rounded-[14px] flex items-center justify-center text-teal-700">
-                <Trophy className="w-7 h-7" />
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total KTU Points</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black font-display text-slate-900">{totalPoints}</span>
-                <span className="text-xs text-slate-500">/ 100 Target</span>
-              </div>
-            </div>
-          </div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total KTU Points"
+          value={`${totalPoints} / ${targetPoints}`}
+          icon={<Trophy className="w-4 h-4" />}
+          hint={`${progressPct}% of graduation target`}
+        />
+
+        {groupCards.map(card => (
+          <StatCard
+            key={card.label}
+            label={`${card.label} • ${card.sub}`}
+            value={`${card.value} pts`}
+            icon={<Award className="w-4 h-4" />}
+            hint="Points credited"
+          />
+        ))}
+      </div>
+
+      {/* Progress bar */}
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-zen space-y-2">
+        <div className="flex justify-between text-xs font-semibold">
+          <span className="text-slate-600 dark:text-slate-300">Mandatory Activity Points Progress</span>
+          <span className="text-teal-700 dark:text-teal-400">{progressPct}% Completed</span>
         </div>
-
-        {/* Overall Graduation Progress Bar */}
-        <div className="mt-8 pt-6 border-t border-slate-100 space-y-2">
-          <div className="flex justify-between text-xs font-semibold">
-            <span className="text-slate-700">Mandatory Activity Points Completion</span>
-            <span className="text-teal-700">{progressPct}% Completed</span>
-          </div>
-          <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
-            <div
-              className="h-full bg-gradient-to-r from-teal-600 via-indigo-600 to-emerald-500 rounded-full transition-all duration-500"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
+        <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-teal-600 dark:bg-teal-500 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${progressPct}%` }}
+          />
         </div>
       </div>
 
-      {/* Activity Group Breakdown Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Group 1 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
-              Group I
-            </span>
-            <span className="text-xs text-slate-500 font-semibold">Tech & Seminars</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-display text-slate-900">{group1}</span>
-            <span className="text-xs text-slate-500">Points Credited</span>
-          </div>
-          <p className="text-[11px] text-slate-500">Hackathons, coding contests, technical workshops</p>
-        </div>
-
-        {/* Group 2 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Group II
-            </span>
-            <span className="text-xs text-slate-500 font-semibold">NSS & Sports</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-display text-slate-900">{group2}</span>
-            <span className="text-xs text-slate-500">Points Credited</span>
-          </div>
-          <p className="text-[11px] text-slate-500">Social initiatives, sports fests, leadership programs</p>
-        </div>
-
-        {/* Group 3 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-              Group III
-            </span>
-            <span className="text-xs text-slate-500 font-semibold">Cultural & Arts</span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-display text-slate-900">{group3}</span>
-            <span className="text-xs text-slate-500">Points Credited</span>
-          </div>
-          <p className="text-[11px] text-slate-500">Arts fests, music, dance, debates, design</p>
-        </div>
-      </div>
-
-      {/* Registered Events & Entry Passes Section */}
+      {/* Passes & Claims */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold font-display text-slate-900 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-teal-700" />
-            My Event Passes & Activity History
+          <h2 className="text-lg font-bold font-display text-slate-900 dark:text-slate-50 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-teal-700 dark:text-teal-400" />
+            My Passes & Point Claims
           </h2>
-          <span className="text-xs text-slate-500">{registrations.length} Registrations</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">{registrations.length} Entries</span>
         </div>
 
         {registrations.length === 0 ? (
-          <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-2 shadow-sm">
-            <p className="text-sm font-semibold text-slate-800">No registered events yet</p>
-            <p className="text-xs text-slate-500">Swipe through the Poster Feed to claim your first event pass!</p>
-          </div>
+          <EmptyState
+            icon={<TicketCheck className="w-6 h-6" />}
+            title="No entries yet"
+            description="Swipe through the poster feed to claim an event pass, or submit a manual activity claim."
+            action={
+              <button
+                onClick={onOpenRequestPoints}
+                className="inline-flex items-center gap-2 py-2.5 px-4 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm transition-colors"
+              >
+                <Send className="w-4 h-4" />
+                Submit First Claim
+              </button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {registrations.map((reg) => {
-              const event = reg.eventId as any;
-              if (!event) return null;
+            {registrations.map(reg => {
+              const isManual = reg.isManualClaim;
+              const title = isManual ? reg.claimTitle : (reg.eventId as any)?.title;
+              const pointsVal = isManual ? reg.claimPoints : (reg.eventId as any)?.points;
+              const group = isManual ? reg.claimGroup : (reg.eventId as any)?.activityGroup;
+              const orgOrLocation = isManual
+                ? 'Manual Claim Submission'
+                : `${(reg.eventId as any)?.organizerName} • ${(reg.eventId as any)?.location}`;
 
               return (
                 <div
                   key={reg._id}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 hover:border-teal-300 transition-all flex flex-col justify-between gap-4 shadow-sm"
+                  className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700 transition-colors flex flex-col justify-between gap-4 shadow-zen"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-teal-700">{event.activityGroup}</span>
-                        <span className="text-xs text-slate-500">• {event.points} Points</span>
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge tone="neutral">{group || 'Group I'}</Badge>
+                        <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                          +{pointsVal} Points
+                        </span>
                       </div>
-                      <h3 className="font-bold text-slate-900 text-base leading-snug">{event.title}</h3>
-                      <p className="text-xs text-slate-500">{event.organizerName} • {event.location}</p>
+                      <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base leading-snug">
+                        {title || 'Activity Entry'}
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{orgOrLocation}</p>
                     </div>
 
-                    <button
-                      onClick={() => onOpenQR(reg)}
-                      className="p-3 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-xl transition-all shadow-sm shrink-0 flex flex-col items-center gap-1 group"
-                      title="Open Entry QR Pass"
-                    >
-                      <QrCode className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] font-bold">QR Pass</span>
-                    </button>
+                    {!isManual && (
+                      <button
+                        onClick={() => onOpenQR(reg)}
+                        className="p-3 bg-slate-100 dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-teal-950/50 text-slate-700 dark:text-slate-200 hover:text-teal-700 dark:hover:text-teal-400 border border-slate-200 dark:border-slate-700 rounded-xl transition-colors shrink-0 flex flex-col items-center gap-1"
+                        title="Open Entry QR Pass"
+                      >
+                        <QrCode className="w-6 h-6" />
+                        <span className="text-[10px] font-bold">QR Pass</span>
+                      </button>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-                    <div className="text-slate-500 flex items-center gap-1">
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                    <div className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
                       <span>{new Date(reg.registeredAt).toLocaleDateString()}</span>
                     </div>
-
                     {getStatusBadge(reg.status)}
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 export type UserRole = 'STUDENT' | 'ORGANIZER' | 'TEACHER';
-export type ActivityGroup = 'Group I Social' | 'Group II Tech' | 'Group III Arts';
+export type ActivityGroup = 'Group I Social' | 'Group II Tech' | 'Group III Arts' | 'Group I' | 'Group II' | 'Group III';
 export type RegistrationStatus = 'REGISTERED' | 'ATTENDED' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
 
 export interface User {
@@ -10,6 +10,11 @@ export interface User {
   department: string;
   studentId?: string;
   avatarUrl?: string;
+  bio?: string;
+  classGroup?: string;
+  isCR?: boolean;
+  followers?: string[];
+  following?: string[];
 }
 
 export type UserProfile = User;
@@ -36,13 +41,30 @@ export interface CampusEvent {
 
 export interface Registration {
   _id: string;
-  eventId: CampusEvent;
+  eventId?: CampusEvent;
   studentId: User;
   qrCodeToken: string;
   registeredAt: string;
   attended: boolean;
   attendedAt?: string;
   status: RegistrationStatus;
+  isManualClaim?: boolean;
+  claimTitle?: string;
+  claimGroup?: string;
+  claimPoints?: number;
+  proofUrl?: string;
+  proofDescription?: string;
+}
+
+export interface AppNotification {
+  _id: string;
+  recipientId: string;
+  senderName: string;
+  title: string;
+  message: string;
+  type: 'POINT_CREDIT' | 'WARNING' | 'ROLE_ASSIGN' | 'VERIFICATION';
+  read: boolean;
+  createdAt: string;
 }
 
 export interface PointsLedger {
@@ -68,4 +90,27 @@ export interface RosterItem {
     completedMinReq: boolean;
   };
   earnedLedger: PointsLedger[];
+}
+
+export type LetterStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface PermissionLetter {
+  _id: string;
+  studentId: User | string;
+  eventId: CampusEvent | string;
+  registrationId?: string;
+  studentName: string;
+  studentRoll?: string;
+  classGroup?: string;
+  eventTitle: string;
+  eventDate?: string;
+  eventVenue?: string;
+  eventPoints?: number;
+  eventGroup?: string;
+  message?: string;
+  status: LetterStatus;
+  responseNote?: string;
+  respondedBy?: string;
+  createdAt: string;
+  respondedAt?: string;
 }
