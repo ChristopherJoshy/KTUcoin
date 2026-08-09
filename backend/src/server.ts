@@ -10,9 +10,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS for all local frontend clients
+// Enable CORS for the deployed Vercel frontend and local dev servers
+const ALLOWED_ORIGINS = [
+  'https://kt-ucoin.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+];
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Origin not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
