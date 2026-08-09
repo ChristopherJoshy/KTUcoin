@@ -24,7 +24,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [activityGroup, setActivityGroup] = useState<ActivityGroup>('Group III Arts');
+  const [activityGroup, setActivityGroup] = useState<ActivityGroup>('Group III');
   const [points, setPoints] = useState<number>(30);
   const [date, setDate] = useState('2026-08-25');
   const [venue, setVenue] = useState('Main Auditorium, CET Trivandrum');
@@ -33,11 +33,11 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   const ktuRulesPresets = [
-    { label: 'Hackathon / Innovation Challenge', group: 'Group III Arts' as ActivityGroup, points: 30 },
-    { label: 'National Level Paper Presentation', group: 'Group II Tech' as ActivityGroup, points: 40 },
-    { label: 'College Technical Workshop / IEEE Event', group: 'Group II Tech' as ActivityGroup, points: 20 },
-    { label: 'NSS Social Service & Green Energy Drive', group: 'Group I Social' as ActivityGroup, points: 20 },
-    { label: 'Cultural & Arts Championship', group: 'Group III Arts' as ActivityGroup, points: 25 }
+    { label: 'Hackathon / Innovation Challenge', group: 'Group III' as ActivityGroup, points: 30 },
+    { label: 'National Level Paper Presentation', group: 'Group II' as ActivityGroup, points: 40 },
+    { label: 'College Technical Workshop / IEEE Event', group: 'Group II' as ActivityGroup, points: 20 },
+    { label: 'NSS Social Service & Green Energy Drive', group: 'Group I' as ActivityGroup, points: 20 },
+    { label: 'Cultural & Arts Championship', group: 'Group III' as ActivityGroup, points: 25 }
   ];
 
   const handleApplyPreset = (preset: { group: ActivityGroup; points: number }) => {
@@ -57,8 +57,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         activityGroup,
         points,
         date,
-        venue,
-        capacity,
+        location: venue,
+        registrationCap: capacity,
         posterUrl,
         organizerId: currentUser?._id,
         organizerName: currentUser?.name || 'Campus Council'
@@ -160,9 +160,9 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               onChange={e => setActivityGroup(e.target.value as ActivityGroup)}
               className="form-input"
             >
-              <option value="Group I Social">Group I: Social Service & NSS</option>
-              <option value="Group II Tech">Group II: Technical & Paper Pres.</option>
-              <option value="Group III Arts">Group III: Hackathons & Culturals</option>
+              <option value="Group I">Group I: Social Service & NSS</option>
+              <option value="Group II">Group II: Technical & Paper Pres.</option>
+              <option value="Group III">Group III: Hackathons & Culturals</option>
             </select>
           </div>
 

@@ -1,5 +1,5 @@
 export type UserRole = 'STUDENT' | 'ORGANIZER' | 'TEACHER';
-export type ActivityGroup = 'Group I Social' | 'Group II Tech' | 'Group III Arts' | 'Group I' | 'Group II' | 'Group III';
+export type ActivityGroup = 'Group I' | 'Group II' | 'Group III';
 export type RegistrationStatus = 'REGISTERED' | 'ATTENDED' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
 
 export interface User {

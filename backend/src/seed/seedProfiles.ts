@@ -45,65 +45,65 @@ export const seedInitialData = async () => {
           description: 'AI AGENTS. ONE UNIVERSE. NO MERCY. Build autonomous AI agents competing in real-time strategic game loops. Prize Pool: 1st ₹1111, 2nd ₹777, 3rd ₹555. Grants +50 KTU Activity Points under Group III (Hackathons & Innovations).',
           posterUrl: '/posters/comp5.jpeg',
           points: 50,
-          activityGroup: 'Group III Arts',
+          activityGroup: 'Group III',
           date: '2026-07-31',
-          venue: 'SJCET Palai AI Arena',
-          capacity: 100,
+          location: 'SJCET Palai AI Arena',
+          registrationCap: 100,
           registeredCount: 68,
           organizerId,
-          status: 'UPCOMING'
+          organizerName: 'IEEE Student Branch Council'
         },
         {
           title: 'Tech4Good: Ideas Today, Impact Tomorrow',
           description: 'Join SIGHT Quest Orientation Session with Dr. Arun P (Head, Dept. of ECE, SJCET). Explore how AI can drive meaningful humanitarian social impact, learn competition format, and submit proposal ideas.',
           posterUrl: '/posters/comp1.jpeg',
           points: 20,
-          activityGroup: 'Group I Social',
+          activityGroup: 'Group I',
           date: '2026-08-11',
-          venue: 'Online / SJCET Seminar Hall',
-          capacity: 250,
+          location: 'Online / SJCET Seminar Hall',
+          registrationCap: 250,
           registeredCount: 142,
           organizerId,
-          status: 'UPCOMING'
+          organizerName: 'IEEE Student Branch Council'
         },
         {
           title: 'Elite League: Women in Engineering Competitive Coding',
           description: '7 Hybrid Sessions (6 Online Technical + 1 Offline LeetCode Practice). Learn competitive C programming from scratch (Variables, Loops, Arrays, Strings, Functions, Pointers). HackerRank assignments & Grand Finale prizes.',
           posterUrl: '/posters/comp2.jpeg',
           points: 30,
-          activityGroup: 'Group II Tech',
+          activityGroup: 'Group II',
           date: '2026-08-18',
-          venue: 'IEEE Computer Society Lab, SJCET Palai',
-          capacity: 120,
+          location: 'IEEE Computer Society Lab, SJCET Palai',
+          registrationCap: 120,
           registeredCount: 85,
           organizerId,
-          status: 'UPCOMING'
+          organizerName: 'IEEE Student Branch Council'
         },
         {
           title: 'Elite League: 4-Week Competitive Programming League',
           description: 'Intensive 4-week competitive coding league for female engineering students. Master data structures, algorithmic efficiency, and contest strategies. Includes verified KTU Activity Points pass.',
           posterUrl: '/posters/comp3.jpeg',
           points: 40,
-          activityGroup: 'Group II Tech',
+          activityGroup: 'Group II',
           date: '2026-08-08',
-          venue: 'Hybrid (Online Contests + Campus Finale)',
-          capacity: 150,
+          location: 'Hybrid (Online Contests + Campus Finale)',
+          registrationCap: 150,
           registeredCount: 110,
           organizerId,
-          status: 'UPCOMING'
+          organizerName: 'IEEE Student Branch Council'
         },
         {
           title: 'IEEE SIGHT Membership Development Session',
           description: 'Orientation session led by Kritthik Rajeev Nair (Chair), Rijo Shaji (Vice Chair), and Alan K Albin (Secretary). Discover humanitarian technology grants, social project mentorship, and KTU activity point credits.',
           posterUrl: '/posters/comp4.jpeg',
           points: 20,
-          activityGroup: 'Group I Social',
+          activityGroup: 'Group I',
           date: '2026-08-05',
-          venue: 'Campus Auditorium, Open to All Branches',
-          capacity: 300,
+          location: 'Campus Auditorium, Open to All Branches',
+          registrationCap: 300,
           registeredCount: 195,
           organizerId,
-          status: 'UPCOMING'
+          organizerName: 'IEEE Student Branch Council'
         }
       ]);
       console.log('Seed: 5 Real SJCET IEEE Competition events seeded in MongoDB');
