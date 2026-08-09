@@ -1,6 +1,19 @@
 import { UserProfile, CampusEvent, Registration, PermissionLetter } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+// this function is used for normalizing the backend base URL by stripping trailing slashes and ensuring the /api suffix for more info refer code-wiki.md line 4
+const normalizeApiBase = (raw: string): string => {
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+const envBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '';
+const isLocal = /localhost|127\.0\.0\.1/.test(window.location.hostname);
+
+const API_BASE = envBase
+  ? normalizeApiBase(envBase)
+  : isLocal
+    ? '/api'
+    : 'https://ktucoin.onrender.com/api';
 
 // this function is used for checking backend health and MongoDB connection status for more info refer code-wiki.md line 12
 export const fetchHealthCheck = async (): Promise<{ status: string }> => {
